@@ -1,0 +1,2 @@
+QUERY_FOR_INSERTING_GUEST = """INSERT INTO guest VALUES (nextval('guest_id_seq'), :first_name,:last_name,:gender,
+                            :email,:password,:phone_number,:is_active,now() at time zone 'UTC',now() at time zone 'UTC') RETURNING id; """
