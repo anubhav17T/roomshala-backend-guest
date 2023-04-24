@@ -32,13 +32,14 @@ def guest_phone_number(phone_number):
 def add_guest(guest):
     try:
         logger.info("===== CREATING GUEST ENTRY ============")
-        return db.execute(QUERY_FOR_INSERTING_GUEST, values={"first_name": guest.first_name,
-                                                             "last_name": guest.last_name,
-                                                             "gender": guest.gender,
-                                                             "email": guest.email,
-                                                             "password": guest.password,
-                                                             "phone_number": guest.phone_number,
-                                                             "is_active": True
+        return db.execute(QUERY_FOR_INSERTING_GUEST, values={"first_name": guest["first_name"],
+                                                             "last_name": guest["last_name"],
+                                                             "gender": guest["gender"],
+                                                             "email": guest["email"],
+                                                             "password": guest["password"],
+                                                             "phone_number": guest[ "phone_number"],
+                                                             "is_active": True,
+                                                             "profile_url":guest["profile_url"]
                                                              })
     except Exception as Why:
         logger.error("==== ERROR IN ADDING GUEST DUE TO {} ===".format(Why))
@@ -159,3 +160,14 @@ def update_guest_fav_property(is_active,id):
         logger.error("#### EXCEPTION IN MARKING GUEST PROPERTY FAV IS {}".format(e))
     finally:
         logger.info("#### GUEST PROPERTY FAV FUNCTION COMPLETED ####")
+
+
+def find_fav_property_exist(property_id,user_id):
+    query = "SELECT * guest_property_fav WHERE user_id=:user_id AND property_id-:property_id"
+    try:
+        return db.execute(query, values={"property_id": property_id, "user_id": user_id})
+    except Exception as e:
+        logger.error("#### EXCEPTION IN MARKING GUEST PROPERTY FAV IS {}".format(e))
+    finally:
+        logger.info("#### GUEST PROPERTY FAV FUNCTION COMPLETED ####")
+

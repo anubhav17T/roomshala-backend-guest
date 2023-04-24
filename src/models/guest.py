@@ -22,6 +22,7 @@ class Guest(BaseModel):
     password: str = Field(..., example="test@123")
     phone_number: str = Field(default=None)
     gender: Gender = Field(default=None)
+    profile_url:str = Field(...)
 
     @validator("first_name")
     @classmethod
@@ -86,6 +87,7 @@ class UpdateGuest(BaseModel):
     last_name: str = None
     gender: Gender = Field(default=None)
     phone_number: str = None
+    profile_url:str = None
     is_active: bool = None
 
     @validator("first_name")

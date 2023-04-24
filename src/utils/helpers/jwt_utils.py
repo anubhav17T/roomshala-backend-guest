@@ -59,6 +59,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
                 "email": result["email"],
                 "phone_number": result["phone_number"],
                 "is_active": result["is_active"],
+                "profile_url":result["profile_url"],
                 "created_on": result["created_on"],
                 "updated_on": result["updated_on"]
                 }

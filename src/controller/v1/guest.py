@@ -89,7 +89,7 @@ async def register_guest(guest: Guest):
                                      success=False
                                      )
     guest_map["password"] = hash_password(guest_map["password"])
-    success = await add_guest(guest)
+    success = await add_guest(guest_map)
     if success is None:
         raise CustomExceptionHandler(message="Something went wrong,Please try again later",
                                      code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -110,7 +110,8 @@ async def register_guest(guest: Guest):
                                "last_name": guest_map["last_name"],
                                "gender": guest_map["gender"],
                                "email": guest_map["email"],
-                               "phone_number": guest_map["phone_number"]
+                               "phone_number": guest_map["phone_number"],
+                               "profile_url":guest_map["profile_url"]
                                }
                          ).response()
 
@@ -219,6 +220,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
                      "first_name": success["first_name"],
                      "last_name": success["last_name"],
                      "gender": success["gender"],
+                     "profile_url":success["profile_url"],
                      "email": success["email"],
                      "phone_number": success["phone_number"]
                      }}
@@ -343,6 +345,8 @@ async def favourite_property(fav: MarkPropertyFavourite, current_user=Depends(ge
                                      target="",
                                      code=status.HTTP_400_BAD_REQUEST
                                      )
+    #CHECK IF PROPERTY IS ALREADY ADDED ACTIVE
+    # fav_property_exist =
     success = await add_guest_fav_property(fav={"is_active": True,
                                                 "property_id": fav.property_id,
                                                 "user_id": current_user["id"]
@@ -353,6 +357,13 @@ async def favourite_property(fav: MarkPropertyFavourite, current_user=Depends(ge
                                      success=False,
                                      target="MARK_FAV_PROPERTY"
                                      )
+    return ResponseModel(message="Property Added to favourites",
+                         code=status.HTTP_200_OK,
+                         success=True,
+                         data={}
+                         ).response()
+
+
 
 
 @guest.get("/property/favourite")

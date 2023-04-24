@@ -31,7 +31,8 @@ def creating_guest_table():
                 sqlalchemy.Column("phone_number", sqlalchemy.String()),
                 sqlalchemy.Column("is_active", sqlalchemy.Boolean()),
                 sqlalchemy.Column("created_on", DateTime),
-                sqlalchemy.Column("updated_on", DateTime)
+                sqlalchemy.Column("updated_on", DateTime),
+                sqlalchemy.Column("profile_url", sqlalchemy.String())
             )
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)

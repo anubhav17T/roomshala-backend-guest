@@ -3,11 +3,9 @@ from fastapi import FastAPI, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from starlette import status
-
 from src.constants.fields import V1_PREFIX, GUEST_TAGS, HEALTH_TAGS
 from src.controller.v1.guest import guest
 from src.utils.connections.db_object import db
-
 from src.utils.connections.check_database_connection import DatabaseConfiguration
 from src.utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from src.utils.tables.guest_db_tables import creating_guest_table, creating_codes_table, creating_blacklist_table, \
@@ -92,7 +90,7 @@ async def middleware(request: Request, call_next):
     response.headers["x-execution-time"] = str(execution_time)
     return response
 
-#
+# #
 # if __name__ == "__main__":
 #     import uvicorn
 #     uvicorn.run(app, port=8000)
