@@ -1,5 +1,5 @@
 import sqlalchemy
-from sqlalchemy import DateTime, Integer, Sequence, ARRAY, FLOAT
+from sqlalchemy import DateTime, Integer, Sequence, ARRAY, FLOAT,DATE
 
 from src.constants.utilities import DB_NAME, DB_HOST, DB_PASSWORD, DB_PORT, DB_URL, DB_USER
 from src.utils.logger.logger import logger
@@ -127,5 +127,49 @@ def guest_fav_property():
             metadata.create_all(engine)
             conn.close()
             return guest_fav
+    except Exception as e:
+        logger.error("{}".format(e))
+
+
+def booking():
+    try:
+        logger.info(" ########## GOING FOR GUEST BOOKING TABLE ##############")
+        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
+        cur = conn.cursor()
+        cur.execute("select * from information_schema.tables where table_name=%s", ('booking',))
+        if bool(cur.rowcount):
+            logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
+            conn.close()
+            return True
+        else:
+            metadata = sqlalchemy.MetaData()
+            booking = sqlalchemy.Table(
+                "booking", metadata,
+                sqlalchemy.Column("id", Integer, Sequence("booking_id_seq"), primary_key=True),
+                sqlalchemy.Column("property_id", sqlalchemy.Integer),
+                sqlalchemy.Column("room_id", sqlalchemy.Integer),
+                sqlalchemy.Column("user_id", sqlalchemy.Integer),
+                sqlalchemy.Column("booking_date", DATE),
+                sqlalchemy.Column("booking_time", DateTime),
+                sqlalchemy.Column("departure_date", DATE),
+                sqlalchemy.Column("departure_time", DateTime),
+                sqlalchemy.Column("adults", Integer),
+                sqlalchemy.Column("children", Integer),
+                sqlalchemy.Column("special_requirement", sqlalchemy.String()),
+                sqlalchemy.Column("gst_percentage", sqlalchemy.FLOAT),
+                sqlalchemy.Column("gst_amount", sqlalchemy.FLOAT),
+                sqlalchemy.Column("booking_base_price", sqlalchemy.FLOAT),
+                sqlalchemy.Column("booking_final_amount", sqlalchemy.FLOAT),
+                sqlalchemy.Column("status", sqlalchemy.String()),
+                sqlalchemy.Column("created_on", DateTime),
+                sqlalchemy.Column("updated_on", DateTime),
+                sqlalchemy.Column("created_by", sqlalchemy.String()),
+                sqlalchemy.Column("updated_by", sqlalchemy.String()),
+            )
+            engine = sqlalchemy.create_engine(
+                DB_URL, pool_size=3, max_overflow=0)
+            metadata.create_all(engine)
+            conn.close()
+            return booking
     except Exception as e:
         logger.error("{}".format(e))

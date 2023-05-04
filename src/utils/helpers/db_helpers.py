@@ -3,6 +3,7 @@ from src.utils.connections.db_object import db
 from src.utils.helpers.db_queries import QUERY_FOR_INSERTING_GUEST
 from src.utils.logger.logger import logger
 from datetime import datetime
+from pytz import timezone
 
 
 def guest_id(id):
@@ -37,9 +38,9 @@ def add_guest(guest):
                                                              "gender": guest["gender"],
                                                              "email": guest["email"],
                                                              "password": guest["password"],
-                                                             "phone_number": guest[ "phone_number"],
+                                                             "phone_number": guest["phone_number"],
                                                              "is_active": True,
-                                                             "profile_url":guest["profile_url"]
+                                                             "profile_url": guest["profile_url"]
                                                              })
     except Exception as Why:
         logger.error("==== ERROR IN ADDING GUEST DUE TO {} ===".format(Why))
@@ -152,7 +153,7 @@ def add_guest_fav_property(fav):
         logger.info("#### create_reset_code FUNCTION COMPLETED ####")
 
 
-def update_guest_fav_property(is_active,id):
+def update_guest_fav_property(is_active, id):
     query = "UPDATE guest_property_fav SET is_active=:is_active Where id=:id"
     try:
         return db.execute(query, values={"id": id, "is_active": is_active})
@@ -162,7 +163,7 @@ def update_guest_fav_property(is_active,id):
         logger.info("#### GUEST PROPERTY FAV FUNCTION COMPLETED ####")
 
 
-def find_fav_property_exist(property_id,user_id):
+def find_fav_property_exist(property_id, user_id):
     query = "SELECT * guest_property_fav WHERE user_id=:user_id AND property_id-:property_id"
     try:
         return db.execute(query, values={"property_id": property_id, "user_id": user_id})
@@ -171,3 +172,100 @@ def find_fav_property_exist(property_id,user_id):
     finally:
         logger.info("#### GUEST PROPERTY FAV FUNCTION COMPLETED ####")
 
+
+def find_booking(id):
+    query = "SELECT id,booking_date,booking_time,departure_date,departure_time,adults,children,special_requirement," \
+            "booking_base_price,gst_percentage,gst_amount,booking_final_amount,status,created_on,updated_on,created_by,updated_by FROM booking WHERE id=:id "
+    return db.fetch_one(query=query,
+                        values={"id": id})
+
+
+def create_booking(book, property, user_info):
+    query = """INSERT INTO booking VALUES (nextval('booking_id_seq'),:property_id,:room_id,:user_id,:booking_date,:booking_time,:departure_date,
+    :departure_time,:adults,:children,:special_requirement,:gst_percentage,:gst_amount,:booking_base_price,:booking_final_amount,:status,now() at time zone 'UTC',now() at time zone 'UTC',:created_by,:updated_by) RETURNING id; """
+    try:
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
+        return db.execute(query,
+                          values={"property_id": property["id"],
+                                  "room_id": book.room_id,
+                                  "user_id": user_info["id"],
+                                  "booking_date": book.booking_date,
+                                  "booking_time": book.booking_time,
+                                  "departure_date": book.departure_date,
+                                  "departure_time": book.departure_time,
+                                  "adults": book.adults,
+                                  "children": book.children,
+                                  "special_requirement": book.special_requirement,
+                                  "gst_percentage": book.gst_percentage,
+                                  "gst_amount": book.gst_amount,
+                                  "booking_base_price": book.booking_base_price,
+                                  "booking_final_amount": book.booking_final_amount,
+                                  "status": book.status,
+                                  "created_by": user_info["email"],
+                                  "updated_by": user_info["email"]
+                                  })
+    except Exception as e:
+        logger.error("##### EXCEPTION IN create_booking FUNCTION IS {}".format(e))
+    finally:
+        logger.info("#### create_booking FUNCTION COMPLETED ####")
+
+
+def find_booking_for_guest(id, user_id):
+    query = "SELECT id,booking_date,booking_time,departure_date,departure_time,adults,children,special_requirement," \
+            "booking_base_price,gst_percentage,gst_amount,booking_final_amount,status,created_on,updated_on,created_by,updated_by FROM booking WHERE id=:id AND user_id=:user_id "
+    return db.fetch_one(query=query,
+                        values={"id": id, "user_id": user_id})
+
+
+def update_booking(user, booking_id):
+    query = "UPDATE booking SET status=:status,updated_on=:updated_on,updated_by=:updated_by WHERE id=:id RETURNING id;"
+    dt = datetime.now(timezone("Asia/Kolkata"))
+
+    return db.execute(query=query,
+                      values={"status": "CANCELLED", "updated_on": dt.now(), "updated_by": user["email"],
+                              "id": booking_id
+                              })
+
+
+def find_upcoming_booking(status, time, user_id):
+    if status == "ALL":
+        query = "SELECT booking.id,booking.property_id,booking.room_id,booking.user_id,booking.booking_date," \
+                "booking.booking_time,booking.departure_date,booking.departure_time,booking.adults,booking.children," \
+                "booking.special_requirement,booking.gst_percentage,booking.gst_amount,booking.booking_base_price," \
+                "booking.booking_final_amount,booking.status,booking.created_on,booking.updated_on," \
+                "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms," \
+                "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
+                "booking.room_id=rooms.id AND booking.user_id=:user_id AND booking.booking_time >='{}'".format(time)
+        # query = "SELECT * FROM booking WHERE user_id=:user_id AND booking_time >='{}'".format(time)
+        return db.fetch_all(query=query, values={"user_id": user_id})
+    else:
+        query = "SELECT booking.id,booking.property_id,booking.room_id,booking.user_id,booking.booking_date," \
+                "booking.booking_time,booking.departure_date,booking.departure_time,booking.adults,booking.children," \
+                "booking.special_requirement,booking.gst_percentage,booking.gst_amount,booking.booking_base_price," \
+                "booking.booking_final_amount,booking.status,booking.created_on,booking.updated_on," \
+                "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms," \
+                "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
+                "booking.room_id=rooms.id AND booking.user_id=:user_id AND status=:status AND booking.booking_time >='{}'".format(time)
+        return db.fetch_all(query=query, values={"status": status, "user_id": user_id})
+
+
+def find_previous_booking(status, time, user_id):
+    if status == "ALL":
+        query = "SELECT booking.id,booking.property_id,booking.room_id,booking.user_id,booking.booking_date," \
+                "booking.booking_time,booking.departure_date,booking.departure_time,booking.adults,booking.children," \
+                "booking.special_requirement,booking.gst_percentage,booking.gst_amount,booking.booking_base_price," \
+                "booking.booking_final_amount,booking.status,booking.created_on,booking.updated_on," \
+                "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms," \
+                "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
+                "booking.room_id=rooms.id AND booking.user_id=:user_id AND booking.booking_time <='{}'".format(time)
+        # query = "SELECT * FROM booking WHERE user_id=:user_id AND booking_time >='{}'".format(time)
+        return db.fetch_all(query=query, values={"user_id": user_id})
+    else:
+        query = "SELECT booking.id,booking.property_id,booking.room_id,booking.user_id,booking.booking_date," \
+                "booking.booking_time,booking.departure_date,booking.departure_time,booking.adults,booking.children," \
+                "booking.special_requirement,booking.gst_percentage,booking.gst_amount,booking.booking_base_price," \
+                "booking.booking_final_amount,booking.status,booking.created_on,booking.updated_on," \
+                "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms," \
+                "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
+                "booking.room_id=rooms.id AND booking.user_id=:user_id AND status=:status AND booking.booking_time <='{}'".format(time)
+        return db.fetch_all(query=query, values={"status": status, "user_id": user_id})

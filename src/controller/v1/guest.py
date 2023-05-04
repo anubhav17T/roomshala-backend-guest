@@ -319,20 +319,6 @@ async def change_password(change_password_object: ChangePassword, current_user=D
                              ).response()
 
 
-@guest.post("/property/booking")
-async def booking(current_user=Depends(get_current_user)):
-    pass
-
-
-@guest.get("/property/upcoming/booking")
-async def booking(current_user=Depends(get_current_user)):
-    pass
-
-
-@guest.get("/property/past/booking")
-async def booking(current_user=Depends(get_current_user)):
-    pass
-
 
 @guest.post("/property/favourite")
 async def favourite_property(fav: MarkPropertyFavourite, current_user=Depends(get_current_user)):

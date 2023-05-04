@@ -4,12 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from starlette import status
 from src.constants.fields import V1_PREFIX, GUEST_TAGS, HEALTH_TAGS
+from src.controller.v1.booking import booking_engine
 from src.controller.v1.guest import guest
 from src.utils.connections.db_object import db
 from src.utils.connections.check_database_connection import DatabaseConfiguration
 from src.utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from src.utils.tables.guest_db_tables import creating_guest_table, creating_codes_table, creating_blacklist_table, \
-    guest_fav_property
+    guest_fav_property, booking
+
 
 origins = ["*"]
 
@@ -22,6 +24,7 @@ def connection():
     creating_codes_table()
     creating_blacklist_table()
     guest_fav_property()
+    booking()
 
 
 connection()
@@ -38,6 +41,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(guest, prefix=V1_PREFIX,tags=[GUEST_TAGS])
+app.include_router(booking_engine, prefix=V1_PREFIX,tags=[GUEST_TAGS])
 
 
 @app.get("/health",tags=[HEALTH_TAGS])
@@ -90,7 +94,7 @@ async def middleware(request: Request, call_next):
     response.headers["x-execution-time"] = str(execution_time)
     return response
 
-# #
+#
 # if __name__ == "__main__":
 #     import uvicorn
-#     uvicorn.run(app, port=8000)
+#     uvicorn.run(app, port=8001)
