@@ -7,6 +7,7 @@ from src.utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from src.utils.helpers.asset_check import AssetValidation, TimeslotConfiguration
 from src.utils.helpers.db_helpers import create_booking, find_booking, find_booking_for_guest, update_booking, \
     find_upcoming_booking, find_previous_booking
+from src.utils.helpers.db_helpers_property import find_particular_room_information
 from src.utils.helpers.jwt_utils import get_current_user
 from src.utils.helpers.misc import user_price_distribution
 from src.utils.logger.logger import logger
@@ -206,3 +207,18 @@ async def booking(booking_status: str, current_user=Depends(get_current_user)):
 @booking_engine.get("/property/base-amount/{base}/user")
 async def booking(base: float = Query(...)):
     return user_price_distribution(base_booking_amount=base)
+
+
+@booking_engine.get("/property/room/{room_id}/base-amount/user")
+async def booking(room_id: int = Query(...)):
+    #check if room id exist and if exist then find the base room price
+    check = await find_particular_room_information(id=room_id)
+    if check is None:
+        raise CustomExceptionHandler(
+            message="Please Check again after sometime",
+            success=False,
+            code=status.HTTP_400_BAD_REQUEST,
+            target="CHECK_ROOM_ID"
+        )
+
+    return user_price_distribution(base_booking_amount=check["base_room_price"])
