@@ -13,7 +13,8 @@ from src.models.guest import Guest, ForgotPassword, ResetPassword, UpdateGuest, 
 from src.utils.helpers import jwt_utils
 from src.utils.helpers.db_helpers import add_guest, create_reset_code, check_reset_password_token, reset_admin_password, \
     disable_reset_code, guest_registered_with_mail_or_phone, guest_email, update_guest, get_protected_password, \
-    guest_change_password, add_guest_fav_property, update_guest_fav_property
+    guest_change_password, add_guest_fav_property, update_guest_fav_property, check_fav_property_existence, \
+    find_user_fav_properties
 from src.utils.helpers.db_helpers_property import find_particular_property_information
 from src.utils.helpers.guest_check import CheckGuest
 from src.utils.helpers.misc import check_password_strength, hash_password, verify_password
@@ -111,7 +112,7 @@ async def register_guest(guest: Guest):
                                "gender": guest_map["gender"],
                                "email": guest_map["email"],
                                "phone_number": guest_map["phone_number"],
-                               "profile_url":guest_map["profile_url"]
+                               "profile_url": guest_map["profile_url"]
                                }
                          ).response()
 
@@ -220,7 +221,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
                      "first_name": success["first_name"],
                      "last_name": success["last_name"],
                      "gender": success["gender"],
-                     "profile_url":success["profile_url"],
+                     "profile_url": success["profile_url"],
                      "email": success["email"],
                      "phone_number": success["phone_number"]
                      }}
@@ -278,6 +279,45 @@ async def update_guest_profile(guest: UpdateGuest, current_user=Depends(get_curr
                          ).response()
 
 
+@guest.post("/property/favourite")
+async def favourite_property(fav: MarkPropertyFavourite, current_user=Depends(get_current_user)):
+    logger.info("MARKING PROPERTY FAVOURITE")
+    # CHECK IF PROPERTY ID IS THERE AND IT IS IN ACTIVE STATE
+    property_information = await find_particular_property_information(fav.property_id)
+    if property_information is None:
+        raise CustomExceptionHandler(message="No Property Found",
+                                     success=False,
+                                     target="",
+                                     code=status.HTTP_400_BAD_REQUEST
+                                     )
+    # CHECK IF PROPERTY IS ALREADY ADDED ACTIVE
+    fav_property_exist = await check_fav_property_existence(property_id=fav.property_id,
+                                                            user_id=current_user["id"]
+                                                            )
+    if fav_property_exist is not None:
+        raise CustomExceptionHandler(message="Property Already Marked as favourite",
+                                     code=status.HTTP_409_CONFLICT,
+                                     success=False,
+                                     target="MARK_FAV_PROPERTY"
+                                     )
+
+    success = await add_guest_fav_property(fav={"is_active": True,
+                                                "property_id": fav.property_id,
+                                                "user_id": current_user["id"]
+                                                })
+    if success is None:
+        raise CustomExceptionHandler(message="Something is wrong with our server,we are working on it.",
+                                     code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                     success=False,
+                                     target="MARK_FAV_PROPERTY"
+                                     )
+    return ResponseModel(message="Property Added to favourites",
+                         code=status.HTTP_200_OK,
+                         success=True,
+                         data={}
+                         ).response()
+
+
 @guest.patch("/change-password")
 async def change_password(change_password_object: ChangePassword, current_user=Depends(get_current_user)):
     logger.info("======= CHANGING PASSWORD FOR USER {} ==========".format(current_user["first_name"]))
@@ -319,42 +359,14 @@ async def change_password(change_password_object: ChangePassword, current_user=D
                              ).response()
 
 
-
-@guest.post("/property/favourite")
-async def favourite_property(fav: MarkPropertyFavourite, current_user=Depends(get_current_user)):
-    logger.info("MARKING PROPERTY FAVOURITE")
-    # CHECK IF PROPERTY ID IS THERE AND IT IS IN ACTIVE STATE
-    property_information = await find_particular_property_information(fav.property_id)
-    if property_information is None:
-        raise CustomExceptionHandler(message="No Property Found",
-                                     success=False,
-                                     target="",
-                                     code=status.HTTP_400_BAD_REQUEST
-                                     )
-    #CHECK IF PROPERTY IS ALREADY ADDED ACTIVE
-    # fav_property_exist =
-    success = await add_guest_fav_property(fav={"is_active": True,
-                                                "property_id": fav.property_id,
-                                                "user_id": current_user["id"]
-                                                })
-    if success is None:
-        raise CustomExceptionHandler(message="Something is wrong with our server,we are working on it.",
-                                     code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                                     success=False,
-                                     target="MARK_FAV_PROPERTY"
-                                     )
-    return ResponseModel(message="Property Added to favourites",
-                         code=status.HTTP_200_OK,
-                         success=True,
-                         data={}
-                         ).response()
-
-
-
-
 @guest.get("/property/favourite")
 async def fetch_favourite_property(current_user=Depends(get_current_user)):
-    logger.info("")
+    logger.info("ADDING PROPERTY AS FAVOURITE")
+    return ResponseModel(message="Favourite Properties",
+                         code=status.HTTP_200_OK,
+                         success=True,
+                         data=await find_user_fav_properties(user_id=current_user["id"])
+                         ).response()
 
 
 @guest.delete("/property/favourite")
@@ -369,4 +381,18 @@ async def favourite_property(fav: UpdateMarkPropertyFavourite, current_user=Depe
                                      code=status.HTTP_400_BAD_REQUEST
                                      )
     logger.info("CHECKING IF USER HAS LISTED PROPERTY EARLIER")
-    success = await update_guest_fav_property()
+    success = await update_guest_fav_property(is_active=fav.is_active,
+                                              property_id=fav.property_id,
+                                              user_id=current_user["id"]
+                                              )
+    if success is None:
+        raise CustomExceptionHandler(message="Something is wrong with our server,we are working on it.",
+                                     code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                     success=False,
+                                     target="CANNOT_MARK_PROPERTY_UNFAV"
+                                     )
+    return ResponseModel(message="Favourites Updated",
+                         code=status.HTTP_200_OK,
+                         success=True,
+                         data=await find_user_fav_properties(user_id=current_user["id"])
+                         ).response()
