@@ -1,3 +1,4 @@
+import json
 import string
 import re
 from random import choice
@@ -11,6 +12,9 @@ pwd_context = CryptContext(schemes=[BCRYPT_SCHEMA])
 def random(digits: int):
     chars = string.digits
     return "".join(choice(chars) for _ in range(digits))
+
+def modify_docs(docs):
+    return json.dumps(docs)
 
 
 def check_password_strength(password):
