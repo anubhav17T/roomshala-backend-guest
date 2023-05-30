@@ -5,7 +5,6 @@ from fastapi import APIRouter, Query, Path, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 from fastapi.encoders import jsonable_encoder
-
 from src.constants.utilities import JWT_EXPIRATION_TIME
 from src.models.property import MarkPropertyFavourite, UpdateMarkPropertyFavourite
 from src.utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
@@ -14,16 +13,19 @@ from src.utils.helpers import jwt_utils
 from src.utils.helpers.db_helpers import add_guest, create_reset_code, check_reset_password_token, reset_admin_password, \
     disable_reset_code, guest_registered_with_mail_or_phone, guest_email, update_guest, get_protected_password, \
     guest_change_password, add_guest_fav_property, update_guest_fav_property, check_fav_property_existence, \
-    find_user_fav_properties
-from src.utils.helpers.db_helpers_property import find_particular_property_information
+    find_user_fav_properties, find_base_room_price
+from src.utils.helpers.db_helpers_property import find_particular_property_information, find_rooms_wise_price, \
+    get_facility_of_property, find_rooms, get_amenity_of_property, particular_room_info
 from src.utils.helpers.guest_check import CheckGuest
-from src.utils.helpers.misc import check_password_strength, hash_password, verify_password
+from src.utils.helpers.misc import check_password_strength, hash_password, verify_password, user_price_distribution
 from src.utils.logger.logger import logger
 from src.models.otp import CreateOtp
 from src.utils.response.data_response import ResponseModel
 from src.utils.helpers.jwt_utils import create_access_token, get_current_user
 from datetime import datetime
 from pytz import timezone
+import json
+
 
 guest = APIRouter()
 
@@ -362,10 +364,19 @@ async def change_password(change_password_object: ChangePassword, current_user=D
 @guest.get("/property/favourite")
 async def fetch_favourite_property(current_user=Depends(get_current_user)):
     logger.info("ADDING PROPERTY AS FAVOURITE")
+    fetch_info = await find_user_fav_properties(user_id=current_user["id"])
+    modified_information = []
+    for i in fetch_info:
+        validate_information = dict(i)
+        validate_information["property_docs"] = json.loads(validate_information["property_docs"])
+        validate_information["property_docs"] = validate_information["property_docs"]["property_images"]
+        validate_information.update(await find_base_room_price(property_id=validate_information["property_id"]))
+        modified_information.append(validate_information)
+
     return ResponseModel(message="Favourite Properties",
                          code=status.HTTP_200_OK,
                          success=True,
-                         data=await find_user_fav_properties(user_id=current_user["id"])
+                         data=modified_information
                          ).response()
 
 
@@ -391,8 +402,61 @@ async def favourite_property(fav: UpdateMarkPropertyFavourite, current_user=Depe
                                      success=False,
                                      target="CANNOT_MARK_PROPERTY_UNFAV"
                                      )
+    fetch_info = await find_user_fav_properties(user_id=current_user["id"])
+    modified_information = []
+    for i in fetch_info:
+        validate_information = dict(i)
+        validate_information["property_docs"] = json.loads(validate_information["property_docs"])
+        validate_information["property_docs"] = validate_information["property_docs"]["property_images"]
+        validate_information.update(await find_base_room_price(property_id=validate_information["property_id"]))
+        modified_information.append(validate_information)
     return ResponseModel(message="Favourites Updated",
                          code=status.HTTP_200_OK,
                          success=True,
-                         data=await find_user_fav_properties(user_id=current_user["id"])
+                         data=modified_information
+                         ).response()
+
+
+@guest.get("/guest/property/room/{id}")
+async def fetch_room_information(id:int):
+    room_info = await particular_room_info(id=id)
+    return ResponseModel(message="Success",
+                         data=room_info,
+                         success=True,
+                         code=status.HTTP_200_OK
+                         ).response()
+
+
+@guest.get("/guest/property/{id}")
+async def property_by_id(id: int):
+    property_information = await find_particular_property_information(id)
+    if property_information is None:
+        raise CustomExceptionHandler(message="No Property Found",
+                                     success=False,
+                                     target="",
+                                     code=status.HTTP_400_BAD_REQUEST
+                                     )
+    property_information = dict(property_information)
+    property_information["property_docs"] = json.loads(property_information["property_docs"])
+    property_information["property_docs"] = property_information["property_docs"]["property_images"]
+    room_wise_price = await find_rooms_wise_price(property_id=id)
+    pricing = []
+    for i in room_wise_price:
+        check = dict(i)
+        price = user_price_distribution(check["base_room_price"])
+        price.pop("booking_base_price")
+        check.update(price)
+        # check.pop("gst_percentage")
+        pricing.append(check)
+
+    info = {"facility": await get_facility_of_property(property_id=id),
+            "pricing": pricing,
+            "amenity": await get_amenity_of_property(property_id=id),
+            "rooms": await find_rooms(property_id=id),
+            }
+    property_information.update(info)
+    return ResponseModel(message="Success",
+                         data=property_information,
+                         success=True,
+                         code=status.HTTP_200_OK
                          ).response()

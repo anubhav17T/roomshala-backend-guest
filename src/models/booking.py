@@ -36,16 +36,9 @@ class Booking(BaseModel):
     departure_time: datetime = Field(...)
     adults: int = Field(...)
     children: int = Field(...)
+    rooms : int = Field(...)
     special_requirement: str = Field(...)
     booking_base_price: float = Field(...)
-    number_of_nights: float = Field(...)
-    number_of_rooms:int = Field(...)
-    number_of_extra_guests: float = Field(...)
-    extra_mattress_price: float = Field(...)
-    billed_extra_mattress_amount: float = Field(...)
-    billed_base_amount: float = Field(...)
-    billed_gst_amount: float = Field(...)
-    billed_total_amount: float = Field(...)
     is_booked_for_someone_else: bool = Field(default=False)
     guest_details: GuestDetails
     status: Status = Field(...)
@@ -55,7 +48,7 @@ class Booking(BaseModel):
 
 
 class UpdateBooking(BaseModel):
-    booking_id: int = Field(..., description="Booking id")
+    booking_parent_id: int = Field(..., description="Booking parent id")
     status = "CANCELLED"
 
 

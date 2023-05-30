@@ -175,7 +175,10 @@ def update_guest_fav_property(is_active, property_id, user_id):
 
 
 def find_user_fav_properties(user_id):
-    query = "SELECT * FROM guest_property_fav WHERE user_id=:user_id"
+    query = """SELECT guest_property_fav.id,user_id,property_id,guest_property_fav.is_active,guest_property_fav.created_on,guest_property_fav.updated_on,
+            properties.property_name,property_type,property_description,property_email_id,complete_address,
+            locality,landmark,pincode,city,state,property_docs FROM guest_property_fav INNER JOIN  properties ON guest_property_fav.property_id=properties.id WHERE guest_property_fav.user_id=:user_id"""
+    # query = "SELECT * FROM guest_property_fav WHERE user_id=:user_id"
     return db.fetch_all(query=query, values={"user_id": user_id})
 
 
@@ -202,7 +205,7 @@ def find_booking_based_parent_id(booking_parent_id):
                         values={"booking_parent_id": booking_parent_id})
 
 
-async def create_booking(book, property, user_info, booking_parent_id):
+async def create_booking(book, property, price_distribution, user_info, booking_parent_id):
     async with db.transaction():
         transaction = await db.transaction()
         query = """INSERT INTO booking VALUES (nextval('booking_id_seq'),:booking_parent_id,:property_id,:room_id,:user_id,:booking_date,:booking_time,:departure_date,
@@ -225,15 +228,18 @@ async def create_booking(book, property, user_info, booking_parent_id):
                                                       "children": book.children,
                                                       "special_requirement": book.special_requirement,
                                                       "booking_base_price": book.booking_base_price,
-                                                      "number_of_nights": book.number_of_nights,
-                                                      "number_of_rooms": book.number_of_rooms,
-                                                      "number_of_extra_guests": book.number_of_extra_guests,
-                                                      "extra_mattress_price": book.extra_mattress_price,
-                                                      "billed_extra_mattress_amount": book.billed_extra_mattress_amount,
-                                                      "billed_base_amount": book.billed_base_amount,
-                                                      "billed_gst_amount": book.billed_gst_amount,
+                                                      "number_of_nights": price_distribution["number_of_nights"],
+                                                      "number_of_rooms": book.rooms,
+                                                      "number_of_extra_guests": price_distribution[
+                                                          "number_of_extra_guests"],
+                                                      "extra_mattress_price": price_distribution[
+                                                          "extra_mattress_price"],
+                                                      "billed_extra_mattress_amount": price_distribution[
+                                                          "billed_extra_mattress_amount"],
+                                                      "billed_base_amount": price_distribution["billed_base_amount"],
+                                                      "billed_gst_amount": price_distribution["billed_gst_amount"],
                                                       "is_booked_for_someone_else": book.is_booked_for_someone_else,
-                                                      "billed_total_amount": book.billed_total_amount,
+                                                      "billed_total_amount": price_distribution["billed_total_amount"],
                                                       "guest_details": book.guest_details,
                                                       "status": book.status,
                                                       "created_by": user_info["email"],
@@ -252,67 +258,82 @@ async def create_booking(book, property, user_info, booking_parent_id):
             return True, booking_parent_id
 
 
-def find_booking_for_guest(id, user_id):
-    query = "SELECT * FROM booking WHERE id=:id AND user_id=:user_id "
+def find_booking_for_guest(booking_parent_id, user_id):
+    query = """SELECT DISTINCT ON (booking_parent_id) * FROM booking WHERE user_id=:user_id AND booking_parent_id='{}'
+    ORDER BY booking_parent_id""".format(booking_parent_id)
+    # query = "SELECT * FROM booking WHERE booking_parent_id=:booking_parent_id AND user_id=:user_id "
     return db.fetch_one(query=query,
-                        values={"id": id, "user_id": user_id})
+                        values={"user_id": user_id})
 
 
-def update_booking(user, booking_id):
-    query = "UPDATE booking SET status=:status,updated_on=:updated_on,updated_by=:updated_by WHERE id=:id RETURNING id;"
+def update_booking(user, booking_parent_id):
+    query = "UPDATE booking SET status=:status,updated_on=:updated_on,updated_by=:updated_by WHERE booking_parent_id=:booking_parent_id RETURNING id;"
     dt = datetime.now(timezone("Asia/Kolkata"))
 
     return db.execute(query=query,
                       values={"status": "CANCELLED", "updated_on": dt.now(), "updated_by": user["email"],
-                              "id": booking_id
+                              "booking_parent_id": booking_parent_id
                               })
 
 
 def find_upcoming_booking(status, time, user_id):
     if status == "ALL":
-        #TODO: NEED TO ADD COMPLETE ATTRIUTES
-        query = "SELECT booking.id,booking.property_id,booking.room_id,booking.user_id,booking.booking_date," \
+        # TODO: NEED TO ADD COMPLETE ATTRIUTES
+        query = "SELECT DISTINCT ON (booking_parent_id) booking.id,booking.property_id,booking.booking_parent_id,booking.room_id,booking.user_id,booking.booking_date," \
                 "booking.booking_time,booking.departure_date,booking.departure_time,booking.adults,booking.children," \
-                "booking.special_requirement,booking.booking_base_price,booking.number_of_nights,booking.billed_total_amount," \
-                "booking.status,booking.created_on,booking.updated_on," \
-                "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms," \
+                "booking.special_requirement,booking.booking_base_price,booking.number_of_nights," \
+                "booking.billed_total_amount,booking.number_of_rooms,booking.number_of_extra_guests," \
+                "booking.extra_mattress_price,booking.billed_extra_mattress_amount,booking.billed_base_amount,booking.billed_gst_amount,booking.billed_total_amount," \
+                "booking.status,booking.created_on,booking.updated_on,booking.guest_details," \
+                "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms,rooms.room_size,rooms.bed_size_type," \
                 "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
                 "booking.room_id=rooms.id AND booking.user_id=:user_id AND booking.booking_time >='{}'".format(time)
         # query = "SELECT * FROM booking WHERE user_id=:user_id AND booking_time >='{}'".format(time)
         return db.fetch_all(query=query, values={"user_id": user_id})
     else:
         # TODO: NEED TO ADD COMPLETE ATTRIUTES
-        query = "SELECT booking.id,booking.property_id,booking.room_id,booking.user_id,booking.booking_date," \
+        query = "SELECT DISTINCT ON (booking_parent_id) booking.id,booking.property_id,booking.booking_parent_id,booking.room_id,booking.user_id,booking.booking_date," \
                 "booking.booking_time,booking.departure_date,booking.departure_time,booking.adults,booking.children," \
-                "booking.special_requirement,booking.booking_base_price,booking.number_of_nights,booking.billed_total_amount," \
-                "booking.extra_mattress_price,booking.status,booking.created_on,booking.updated_on," \
+                "booking.special_requirement,booking.booking_base_price,booking.number_of_nights," \
+                "booking.billed_total_amount,booking.number_of_rooms,booking.number_of_extra_guests," \
+                "booking.extra_mattress_price,booking.billed_extra_mattress_amount,booking.billed_base_amount,booking.billed_gst_amount,booking.billed_total_amount," \
+                "booking.status,booking.created_on,booking.updated_on,booking.guest_details," \
                 "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms," \
                 "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
-                "booking.room_id=rooms.id AND booking.user_id=:user_id AND status=:status AND booking.booking_time >='{}'".format(
-            time)
+                "booking.room_id=rooms.id AND booking.user_id=:user_id AND status=:status AND booking.booking_time >='{}'".format(time)
+
         return db.fetch_all(query=query, values={"status": status, "user_id": user_id})
 
 
 def find_previous_booking(status, time, user_id):
     if status == "ALL":
         # TODO: NEED TO ADD COMPLETE ATTRIUTES
-        query = "SELECT booking.id,booking.property_id,booking.room_id,booking.user_id,booking.booking_date," \
+        query = "SELECT DISTINCT ON (booking_parent_id) booking.id,booking.property_id,booking.booking_parent_id,booking.room_id,booking.user_id,booking.booking_date," \
                 "booking.booking_time,booking.departure_date,booking.departure_time,booking.adults,booking.children," \
-                "booking.special_requirement,booking.gst_percentage,booking.gst_amount,booking.booking_base_price," \
-                "booking.booking_final_amount,booking.status,booking.created_on,booking.updated_on," \
-                "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms," \
+                "booking.special_requirement,booking.booking_base_price,booking.number_of_nights," \
+                "booking.billed_total_amount,booking.number_of_rooms,booking.number_of_extra_guests," \
+                "booking.extra_mattress_price,booking.billed_extra_mattress_amount,booking.billed_base_amount,booking.billed_gst_amount,booking.billed_total_amount," \
+                "booking.status,booking.created_on,booking.updated_on,booking.guest_details," \
+                "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms,rooms.room_size,rooms.bed_size_type," \
                 "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
                 "booking.room_id=rooms.id AND booking.user_id=:user_id AND booking.booking_time <='{}'".format(time)
         # query = "SELECT * FROM booking WHERE user_id=:user_id AND booking_time >='{}'".format(time)
         return db.fetch_all(query=query, values={"user_id": user_id})
     else:
         # TODO: NEED TO ADD COMPLETE ATTRIUTES
-        query = "SELECT booking.id,booking.property_id,booking.room_id,booking.user_id,booking.booking_date," \
+        query = "SELECT DISTINCT ON (booking_parent_id) booking.id,booking.property_id,booking.booking_parent_id,booking.room_id,booking.user_id,booking.booking_date," \
                 "booking.booking_time,booking.departure_date,booking.departure_time,booking.adults,booking.children," \
-                "booking.special_requirement,booking.gst_percentage,booking.gst_amount,booking.booking_base_price," \
-                "booking.booking_final_amount,booking.status,booking.created_on,booking.updated_on," \
+                "booking.special_requirement,booking.booking_base_price,booking.number_of_nights," \
+                "booking.billed_total_amount,booking.number_of_rooms,booking.number_of_extra_guests," \
+                "booking.extra_mattress_price,booking.billed_extra_mattress_amount,booking.billed_base_amount,booking.billed_gst_amount,booking.billed_total_amount," \
+                "booking.status,booking.created_on,booking.updated_on,booking.guest_details," \
                 "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms," \
                 "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
                 "booking.room_id=rooms.id AND booking.user_id=:user_id AND status=:status AND booking.booking_time <='{}'".format(
             time)
         return db.fetch_all(query=query, values={"status": status, "user_id": user_id})
+
+
+def find_base_room_price(property_id):
+    query = "SELECT base_room_price FROM rooms WHERE property_id=:property_id"
+    return db.fetch_one(query=query, values={"property_id": property_id})
