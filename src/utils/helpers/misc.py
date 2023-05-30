@@ -55,14 +55,14 @@ async def price_distribution_calculator(property_id, check_in_date, check_out_da
     dt = datetime.now(timezone("Asia/Kolkata"))
     property_information = await find_particular_property_information(id=property_id)
     if property_information is None:
-        return False
+        raise Exception("No property found")
     check_for_room = await check_if_room_exist(property_id=property_id)
     if check_for_room is None:
-        return False
+        raise Exception("No room exist")
     if check_in_date < dt.date():
-        return False
+        raise Exception("Check dates")
     if check_out_date < check_in_date:
-        return False
+        raise Exception("Check dates")
     delta = check_out_date - check_in_date
     delta_days = delta.days
     number_of_extra_guest = guests - 2 * rooms
