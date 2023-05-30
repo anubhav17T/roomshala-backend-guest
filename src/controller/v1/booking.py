@@ -171,28 +171,6 @@ async def booking(book: Booking, current_user=Depends(get_current_user)):
             target="CREATE_RESERVATION"
         )
 
-
-@booking_engine.get("/property/booking/{booking_parent_id}")
-async def parent_booking(booking_parent_id: str = Query(...), current_user=Depends(get_current_user)):
-    details = await find_booking_based_parent_id(booking_parent_id=booking_parent_id)
-    modified_information = []
-    for i in details:
-        validate_information = dict(i)
-        validate_information["guest_details"] = json.loads(validate_information["guest_details"])
-        details = await find_particular_property_information(id=validate_information["property_id"])
-        details = dict(details)
-        details["property_docs"] = json.loads(details["property_docs"])
-        details["property_docs"] = details["property_docs"]["property_images"]
-        validate_information["property_info"] = details
-
-        modified_information.append(validate_information)
-    return ResponseModel(message="Success",
-                         success=True,
-                         code=status.HTTP_200_OK,
-                         data=modified_information,
-                         ).response()
-
-
 @booking_engine.patch("/property/booking")
 async def booking(update: UpdateBooking, current_user=Depends(get_current_user)):
     logger.info("CREATING BOOKING FOR {}".format(current_user["first_name"]))
@@ -255,6 +233,29 @@ async def booking(update: UpdateBooking, current_user=Depends(get_current_user))
                              code=status.HTTP_200_OK,
                              data=validate_information,
                              ).response()
+
+@booking_engine.get("/property/booking/{booking_parent_id}")
+async def parent_booking(booking_parent_id: str = Query(...), current_user=Depends(get_current_user)):
+    details = await find_booking_based_parent_id(booking_parent_id=booking_parent_id)
+    modified_information = []
+    for i in details:
+        validate_information = dict(i)
+        validate_information["guest_details"] = json.loads(validate_information["guest_details"])
+        details = await find_particular_property_information(id=validate_information["property_id"])
+        details = dict(details)
+        details["property_docs"] = json.loads(details["property_docs"])
+        details["property_docs"] = details["property_docs"]["property_images"]
+        validate_information["property_info"] = details
+
+        modified_information.append(validate_information)
+    return ResponseModel(message="Success",
+                         success=True,
+                         code=status.HTTP_200_OK,
+                         data=modified_information,
+                         ).response()
+
+
+
 
 
 @booking_engine.get("/property/upcoming/booking/{booking_status}")
