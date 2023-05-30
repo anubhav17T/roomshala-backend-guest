@@ -196,6 +196,7 @@ async def parent_booking(booking_parent_id: str = Query(...), current_user=Depen
 @booking_engine.patch("/property/booking")
 async def booking(update: UpdateBooking, current_user=Depends(get_current_user)):
     logger.info("CREATING BOOKING FOR {}".format(current_user["first_name"]))
+    update.booking_parent_id = str(update.booking_parent_id)
     booking_info = await find_booking_for_guest(booking_parent_id=str(update.booking_parent_id), user_id=current_user["id"])
     if booking_info is None:
         raise CustomExceptionHandler(
