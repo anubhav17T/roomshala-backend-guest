@@ -174,8 +174,9 @@ async def booking(book: Booking, current_user=Depends(get_current_user)):
 @booking_engine.patch("/property/booking")
 async def booking(update: UpdateBooking, current_user=Depends(get_current_user)):
     logger.info("CREATING BOOKING FOR {}".format(current_user["first_name"]))
-    update.booking_parent_id = str(update.booking_parent_id)
-    booking_info = await find_booking_for_guest(booking_parent_id=str(update.booking_parent_id), user_id=current_user["id"])
+    logger.info("BOOKING_PARENT ID IS {}".format(update.booking_parent_id))
+
+    booking_info = await find_booking_for_guest(booking_parent_id=update.booking_parent_id, user_id=current_user["id"])
     if booking_info is None:
         raise CustomExceptionHandler(
             message="No booking found!",
@@ -208,7 +209,7 @@ async def booking(update: UpdateBooking, current_user=Depends(get_current_user))
             code=status.HTTP_409_CONFLICT,
             target="BOOKING_STATUS"
         )
-    success = await update_booking(booking_parent_id=str(update.booking_parent_id),
+    success = await update_booking(booking_parent_id=update.booking_parent_id,
                                    user=current_user
                                    )
     if success is None:
@@ -219,10 +220,10 @@ async def booking(update: UpdateBooking, current_user=Depends(get_current_user))
             target="BOOKING_UPDATE_ISSUE"
         )
     else:
-        details = await find_booking_for_guest(user_id=current_user["id"], booking_parent_id =str(update.booking_parent_id))
+        details = await find_booking_for_guest(user_id=current_user["id"], booking_parent_id =update.booking_parent_id)
         validate_information = dict(details)
         validate_information["guest_details"] = json.loads(validate_information["guest_details"])
-        check = await room_count(booking_parent_id=str(update.booking_parent_id))
+        check = await room_count(booking_parent_id=update.booking_parent_id)
         room_id = []
         for i in check:
             val = dict(i)

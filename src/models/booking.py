@@ -48,7 +48,7 @@ class Booking(BaseModel):
 
 
 class UpdateBooking(BaseModel):
-    booking_parent_id: int = Field(..., description="Booking parent id")
+    booking_parent_id: str = Field(..., description="Booking parent id")
     status = "CANCELLED"
 
 
