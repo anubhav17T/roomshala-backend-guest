@@ -66,6 +66,9 @@ async def price_distribution_calculator(property_id, check_in_date, check_out_da
     delta = check_out_date - check_in_date
     delta_days = delta.days
     number_of_extra_guest = guests - 2 * rooms
+    if number_of_extra_guest <=0:
+        number_of_extra_guest = 0
+
     room_wise_price = await find_rooms_wise_price(property_id=property_id)
     pricing = []
     for i in room_wise_price:
@@ -77,7 +80,7 @@ async def price_distribution_calculator(property_id, check_in_date, check_out_da
                               "billed_extra_mattress_amount": check[
                                                                   "extra_mattress_price"] * number_of_extra_guest * delta_days,
                               "billed_base_amount": (check["base_room_price"] * delta_days * rooms) + (
-                                          check["extra_mattress_price"] * number_of_extra_guest * delta_days),
+                                      check["extra_mattress_price"] * number_of_extra_guest * delta_days),
                               "billed_gst_amount": "",
                               "billed_total_amount": ""
                               }
