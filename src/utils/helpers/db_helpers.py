@@ -287,7 +287,7 @@ def find_upcoming_booking(status, time, user_id):
                 "booking.status,booking.created_on,booking.updated_on,booking.guest_details," \
                 "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms,rooms.room_size,rooms.bed_size_type," \
                 "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
-                "booking.room_id=rooms.id AND booking.user_id=:user_id AND booking.booking_time >='{}'".format(time)
+                "booking.room_id=rooms.id AND booking.user_id=:user_id AND booking.booking_time >='{}' ORDER BY booking_parent_id,booking.updated_on DESC".format(time)
         # query = "SELECT * FROM booking WHERE user_id=:user_id AND booking_time >='{}'".format(time)
         return db.fetch_all(query=query, values={"user_id": user_id})
     else:
@@ -300,7 +300,7 @@ def find_upcoming_booking(status, time, user_id):
                 "booking.status,booking.created_on,booking.updated_on,booking.guest_details," \
                 "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms," \
                 "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
-                "booking.room_id=rooms.id AND booking.user_id=:user_id AND status=:status AND booking.booking_time >='{}'".format(time)
+                "booking.room_id=rooms.id AND booking.user_id=:user_id AND status=:status AND booking.booking_time >='{}' ORDER BY booking_parent_id,booking.updated_on DESC".format(time)
 
         return db.fetch_all(query=query, values={"status": status, "user_id": user_id})
 
@@ -316,7 +316,7 @@ def find_previous_booking(status, time, user_id):
                 "booking.status,booking.created_on,booking.updated_on,booking.guest_details," \
                 "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms,rooms.room_size,rooms.bed_size_type," \
                 "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
-                "booking.room_id=rooms.id AND booking.user_id=:user_id AND booking.booking_time <='{}'".format(time)
+                "booking.room_id=rooms.id AND booking.user_id=:user_id AND booking.booking_time <='{}' ORDER BY booking_parent_id,booking.updated_on DESC".format(time)
         # query = "SELECT * FROM booking WHERE user_id=:user_id AND booking_time >='{}'".format(time)
         return db.fetch_all(query=query, values={"user_id": user_id})
     else:
@@ -329,7 +329,7 @@ def find_previous_booking(status, time, user_id):
                 "booking.status,booking.created_on,booking.updated_on,booking.guest_details," \
                 "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms," \
                 "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
-                "booking.room_id=rooms.id AND booking.user_id=:user_id AND status=:status AND booking.booking_time <='{}'".format(
+                "booking.room_id=rooms.id AND booking.user_id=:user_id AND status=:status AND booking.booking_time <='{}' ORDER BY booking_parent_id,booking.updated_on DESC".format(
             time)
         return db.fetch_all(query=query, values={"status": status, "user_id": user_id})
 
@@ -337,3 +337,17 @@ def find_previous_booking(status, time, user_id):
 def find_base_room_price(property_id):
     query = "SELECT base_room_price FROM rooms WHERE property_id=:property_id"
     return db.fetch_one(query=query, values={"property_id": property_id})
+
+
+def find_all_cancelled_booking(user_id):
+    query = "SELECT DISTINCT ON (booking_parent_id) booking.id,booking.property_id,booking.booking_parent_id,booking.room_id,booking.user_id,booking.booking_date," \
+            "booking.booking_time,booking.departure_date,booking.departure_time,booking.adults,booking.children," \
+            "booking.special_requirement,booking.booking_base_price,booking.number_of_nights," \
+            "booking.billed_total_amount,booking.number_of_rooms,booking.number_of_extra_guests," \
+            "booking.extra_mattress_price,booking.billed_extra_mattress_amount,booking.billed_base_amount,booking.billed_gst_amount,booking.billed_total_amount," \
+            "booking.status,booking.created_on,booking.updated_on,booking.guest_details," \
+            "booking.created_by,booking.updated_by,rooms.room_type,rooms.bed_size_type,rooms.number_of_bathrooms,rooms.room_size,rooms.bed_size_type," \
+            "rooms.max_occupancy,rooms.days,rooms.room_description FROM booking,rooms WHERE " \
+            "booking.room_id=rooms.id AND booking.user_id=:user_id AND status=:status ORDER BY booking_parent_id,booking.updated_on DESC"
+    # query = "SELECT * FROM booking WHERE user_id=:user_id AND booking_time >='{}'".format(time)
+    return db.fetch_all(query=query, values={"user_id": user_id,"status":"CANCELLED"})

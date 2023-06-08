@@ -7,7 +7,7 @@ from src.models.booking import Booking, UpdateBooking, BookingType
 from src.utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from src.utils.helpers.asset_check import AssetValidation, TimeslotConfiguration
 from src.utils.helpers.db_helpers import create_booking, find_booking, find_booking_for_guest, update_booking, \
-    find_upcoming_booking, find_previous_booking, find_booking_based_parent_id
+    find_upcoming_booking, find_previous_booking, find_booking_based_parent_id, find_all_cancelled_booking
 from src.utils.helpers.db_helpers_property import find_particular_room_information, \
     find_particular_property_information, room_count, particular_room_info
 from src.utils.helpers.jwt_utils import get_current_user
@@ -46,7 +46,7 @@ async def booking(book: Booking, current_user=Depends(get_current_user)):
         await time_based.validate_departure_time()
         await time_based.validate_departure_date()
         await time_based.check_if_start_date_valid()
-        await time_based.check_if_booking_time_less_current_time()
+        # await time_based.check_if_booking_time_less_current_time()
     except Exception as why:
         logger.error("######### ERROR IN TIMESLOT CONFIGURATION CHECKS BECAUSE {} ##############".format(why))
         raise CustomExceptionHandler(
@@ -134,7 +134,7 @@ async def booking(book: Booking, current_user=Depends(get_current_user)):
             validate_information = dict(find_id)
             room_id.append(validate_information["room_id"])
         for info in details:
-            if count >=1:
+            if count >= 1:
                 break
             validate_information = dict(info)
             validate_information["guest_details"] = json.loads(validate_information["guest_details"])
@@ -143,7 +143,7 @@ async def booking(book: Booking, current_user=Depends(get_current_user)):
             details["property_docs"] = json.loads(details["property_docs"])
             details["property_docs"] = details["property_docs"]["property_images"]
             validate_information["property_details"] = details
-            count +=1
+            count += 1
             validate_information["room_info"] = await particular_room_info(id=room_id[0])
         validate_information["room_id"] = room_id
 
@@ -170,6 +170,7 @@ async def booking(book: Booking, current_user=Depends(get_current_user)):
             code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             target="CREATE_RESERVATION"
         )
+
 
 @booking_engine.patch("/property/booking")
 async def booking(update: UpdateBooking, current_user=Depends(get_current_user)):
@@ -220,7 +221,7 @@ async def booking(update: UpdateBooking, current_user=Depends(get_current_user))
             target="BOOKING_UPDATE_ISSUE"
         )
     else:
-        details = await find_booking_for_guest(user_id=current_user["id"], booking_parent_id =update.booking_parent_id)
+        details = await find_booking_for_guest(user_id=current_user["id"], booking_parent_id=update.booking_parent_id)
         validate_information = dict(details)
         validate_information["guest_details"] = json.loads(validate_information["guest_details"])
         check = await room_count(booking_parent_id=update.booking_parent_id)
@@ -228,12 +229,13 @@ async def booking(update: UpdateBooking, current_user=Depends(get_current_user))
         for i in check:
             val = dict(i)
             room_id.append(val["room_id"])
-        validate_information["room_id"] =room_id
+        validate_information["room_id"] = room_id
         return ResponseModel(message="Your Booking has been successfully cancelled",
                              success=True,
                              code=status.HTTP_200_OK,
                              data=validate_information,
                              ).response()
+
 
 @booking_engine.get("/property/booking/{booking_parent_id}")
 async def parent_booking(booking_parent_id: str = Query(...), current_user=Depends(get_current_user)):
@@ -256,9 +258,6 @@ async def parent_booking(booking_parent_id: str = Query(...), current_user=Depen
                          ).response()
 
 
-
-
-
 @booking_engine.get("/property/upcoming/booking/{booking_status}")
 async def booking(booking_status: str, current_user=Depends(get_current_user)):
     if booking_status is not None:
@@ -270,7 +269,7 @@ async def booking(booking_status: str, current_user=Depends(get_current_user)):
                 target="ENUM_STATUS"
             )
     dt = datetime.now(timezone("Asia/Kolkata"))
-    #filter it on basis of booking_if
+    # filter it on basis of booking_if
     upcoming_booking = await find_upcoming_booking(status=booking_status, time=dt.now(), user_id=current_user["id"])
     modified_information = []
     for info in upcoming_booking:
@@ -289,8 +288,7 @@ async def booking(booking_status: str, current_user=Depends(get_current_user)):
         val["property_info"] = details
         modified_information.append(val)
 
-    #add property details in correspoding
-
+    # add property details in correspoding
 
     return ResponseModel(message="Please Find your bookings",
                          success=True,
@@ -302,7 +300,7 @@ async def booking(booking_status: str, current_user=Depends(get_current_user)):
 @booking_engine.get("/property/past/booking/{booking_status}")
 async def booking(booking_status: str, current_user=Depends(get_current_user)):
     if booking_status is not None:
-        if booking_status not in ["CHECKED_IN", "CANCELLED", "CONFIRMED", "NOSHOW","ALL"]:
+        if booking_status not in ["CHECKED_IN", "CANCELLED", "CONFIRMED", "NOSHOW", "ALL"]:
             raise CustomExceptionHandler(
                 message="Please check status",
                 success=False,
@@ -329,17 +327,15 @@ async def booking(booking_status: str, current_user=Depends(get_current_user)):
         modified_information.append(val)
 
     return ResponseModel(message="Please Find your bookings",
-                  success=True,
-                  code=status.HTTP_200_OK,
-                  data=modified_information
-                  ).response()
+                         success=True,
+                         code=status.HTTP_200_OK,
+                         data=modified_information
+                         ).response()
 
 
 @booking_engine.get("/property/base-amount/{base}/user")
 async def booking(base: float = Query(...)):
     return user_price_distribution(base_booking_amount=base)
-
-
 
 
 @booking_engine.get("/property/room/{room_id}/base-amount/user")
@@ -355,3 +351,31 @@ async def booking(room_id: int = Query(...)):
         )
 
     return user_price_distribution(base_booking_amount=check["base_room_price"])
+
+
+@booking_engine.get("/property/comprehensive/cancelled")
+async def booking(current_user=Depends(get_current_user)):
+    dt = datetime.now(timezone("Asia/Kolkata"))
+    previous_booking = await find_all_cancelled_booking(user_id=current_user["id"])
+    modified_information = []
+    for info in previous_booking:
+        val = dict(info)
+        check = await room_count(booking_parent_id=str(val["booking_parent_id"]))
+        room_id = []
+        for i in check:
+            value = dict(i)
+            room_id.append(value["room_id"])
+        val["room_id"] = room_id
+        val["guest_details"] = json.loads(val["guest_details"])
+        details = await find_particular_property_information(id=val["property_id"])
+        details = dict(details)
+        details["property_docs"] = json.loads(details["property_docs"])
+        details["property_docs"] = details["property_docs"]["property_images"]
+        val["property_info"] = details
+        modified_information.append(val)
+
+    return ResponseModel(message="Please Find your bookings",
+                         success=True,
+                         code=status.HTTP_200_OK,
+                         data=modified_information
+                         ).response()
