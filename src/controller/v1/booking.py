@@ -9,7 +9,7 @@ from src.utils.helpers.asset_check import AssetValidation, TimeslotConfiguration
 from src.utils.helpers.db_helpers import create_booking, find_booking, find_booking_for_guest, update_booking, \
     find_upcoming_booking, find_previous_booking, find_booking_based_parent_id, find_all_cancelled_booking
 from src.utils.helpers.db_helpers_property import find_particular_room_information, \
-    find_particular_property_information, room_count, particular_room_info
+    find_particular_property_information, room_count, particular_room_info, find_particular_property_information_comp
 from src.utils.helpers.jwt_utils import get_current_user
 from src.utils.helpers.misc import user_price_distribution, random, price_distribution_calculator
 from src.utils.logger.logger import logger
@@ -244,7 +244,7 @@ async def parent_booking(booking_parent_id: str = Query(...), current_user=Depen
     for i in details:
         validate_information = dict(i)
         validate_information["guest_details"] = json.loads(validate_information["guest_details"])
-        details = await find_particular_property_information(id=validate_information["property_id"])
+        details = await find_particular_property_information_comp(id=validate_information["property_id"])
         details = dict(details)
         details["property_docs"] = json.loads(details["property_docs"])
         details["property_docs"] = details["property_docs"]["property_images"]
@@ -281,7 +281,7 @@ async def booking(booking_status: str, current_user=Depends(get_current_user)):
             room_id.append(value["room_id"])
         val["room_id"] = room_id
         val["guest_details"] = json.loads(val["guest_details"])
-        details = await find_particular_property_information(id=val["property_id"])
+        details = await find_particular_property_information_comp(id=val["property_id"])
         details = dict(details)
         details["property_docs"] = json.loads(details["property_docs"])
         details["property_docs"] = details["property_docs"]["property_images"]
@@ -319,7 +319,7 @@ async def booking(booking_status: str, current_user=Depends(get_current_user)):
             room_id.append(value["room_id"])
         val["room_id"] = room_id
         val["guest_details"] = json.loads(val["guest_details"])
-        details = await find_particular_property_information(id=val["property_id"])
+        details = await find_particular_property_information_comp(id=val["property_id"])
         details = dict(details)
         details["property_docs"] = json.loads(details["property_docs"])
         details["property_docs"] = details["property_docs"]["property_images"]
