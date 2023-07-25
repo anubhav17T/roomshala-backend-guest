@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta, datetime
+from starlette.background import BackgroundTasks
 
 from fastapi import APIRouter, Query, Path, Depends
 from starlette import status
@@ -10,6 +11,7 @@ from src.utils.helpers.db_helpers import create_booking, find_booking, find_book
     find_upcoming_booking, find_previous_booking, find_booking_based_parent_id, find_all_cancelled_booking
 from src.utils.helpers.db_helpers_property import find_particular_room_information, \
     find_particular_property_information, room_count, particular_room_info, find_particular_property_information_comp
+from src.utils.helpers.email import send_welcome_mail
 from src.utils.helpers.jwt_utils import get_current_user
 from src.utils.helpers.misc import user_price_distribution, random, price_distribution_calculator
 from src.utils.logger.logger import logger
@@ -22,10 +24,9 @@ DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUN
 
 
 @booking_engine.post("/property/booking")
-async def booking(book: Booking, current_user=Depends(get_current_user)):
+async def booking(book: Booking, background_tasks: BackgroundTasks, current_user=Depends(get_current_user)):
     logger.info("CREATING BOOKING FOR {}".format(current_user["first_name"]))
     logger.info("VALIDATING CHECKS FOR ROOM AND HOTEL")
-
     if len(book.room_id) != len(set(book.room_id)):
         raise CustomExceptionHandler(message="OOPS! This is on us,please try again later",
                                      success=False,
@@ -146,7 +147,6 @@ async def booking(book: Booking, current_user=Depends(get_current_user)):
             count += 1
             validate_information["room_info"] = await particular_room_info(id=room_id[0])
         validate_information["room_id"] = room_id
-
         # for i in details:
         #     room_id = []
         #     validate_information = dict(i)
@@ -158,6 +158,28 @@ async def booking(book: Booking, current_user=Depends(get_current_user)):
         #     validate_information["property_details"]["property_docs"] = modified_details["property_docs"]["property_images"]
         #     # validate_information["property_details"] = await find_particular_property_information(id=validate_information["property_id"])
         #     modified_information.append(validate_information)
+        price_details = price_distribution[0]["requested_metadata"]
+        property_details = await find_particular_property_information(id=validate_information["property_id"])
+        guest_details_map = json.loads(book.guest_details)
+
+        details = {"hotel_name": property_details["property_name"],
+                   "booking_id":book.booking_parent_id,
+                   "checkin_date": book.booking_date,
+                   "checkout_date": book.departure_date,
+                   "num_rooms": book.rooms,
+                   "num_guests": book.adults + book.children,
+                   "booking_amount": price_details["billed_base_amount"],
+                   "gst_amount": price_details["billed_gst_amount"],
+                   "total_amount": price_details["billed_total_amount"],
+                   "hotel_address": property_details["complete_address"],
+                   "hotel_email": property_details["property_email_id"],
+                   "hotel_phone_number": property_details["property_mobile_number"],
+                   "guest_name": guest_details_map["first_name"] + " " + guest_details_map["last_name"],
+                   "guest_phone_number": guest_details_map["phone_number"],
+                   "guest_email_id": guest_details_map["email"]
+                   }
+        background_tasks.add_task(send_welcome_mail, to_email=current_user["email"], subject='Booking Confirmed',
+                                  details=details)
         return ResponseModel(message="Enjoy Your Stay. Happy to serve you",
                              success=True,
                              code=status.HTTP_200_OK,

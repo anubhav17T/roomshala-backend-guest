@@ -28,7 +28,7 @@ class GuestDetails(BaseModel):
 
 
 class Booking(BaseModel):
-    booking_parent_id:int = Field(default=None)
+    booking_parent_id: int = Field(default=None)
     room_id: List[int] = Field(..., description="Room id")
     booking_date: date = Field(...)
     booking_time: datetime = Field(...)
@@ -36,7 +36,7 @@ class Booking(BaseModel):
     departure_time: datetime = Field(...)
     adults: int = Field(...)
     children: int = Field(...)
-    rooms : int = Field(...)
+    rooms: int = Field(...)
     special_requirement: str = Field(...)
     booking_base_price: float = Field(...)
     is_booked_for_someone_else: bool = Field(default=False)
