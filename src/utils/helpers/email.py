@@ -12,7 +12,7 @@ SUPPORT_EMAIL = "support@roomshala.com"
 def send_welcome_mail(to_email, subject, details):
     message = Mail(
         from_email=SUPPORT_EMAIL,
-        to_emails=to_email,
+        to_emails=[to_email,"reservations@roomshala.com",details["hotel_email"]],
         subject=subject,
         html_content=USER_BOOKING_CONFIRMED.format(details["hotel_name"], details["booking_id"],
                                                    details["checkin_date"],
