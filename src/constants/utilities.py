@@ -11,9 +11,9 @@ DB_HOST ="dpg-ckkhvlglk5ic73b8h82g-a.oregon-postgres.render.com"
 DB_USER = "postgresql"
 DB_PASSWORD = "7l5UozFVRi8EQeEvGXnjF4tmQz3t0kQJ"
 DB_NAME = "roomshaladatabase"
-# DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-DB_URL = "postgresql://postgresql:7l5UozFVRi8EQeEvGXnjF4tmQz3t0kQJ@dpg-ckkhvlglk5ic73b8h82g-a.oregon-postgres.render.com:5432/roomshaladatabase"
+# DB_URL = "postgresql://postgresql:7l5UozFVRi8EQeEvGXnjF4tmQz3t0kQJ@dpg-ckkhvlglk5ic73b8h82g-a.oregon-postgres.render.com:5432/roomshaladatabase"
 
 
 
