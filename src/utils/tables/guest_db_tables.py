@@ -1,6 +1,5 @@
 import sqlalchemy
 from sqlalchemy import DateTime, Integer, Sequence, ARRAY, FLOAT,DATE
-
 from src.constants.utilities import DB_NAME, DB_HOST, DB_PASSWORD, DB_PORT, DB_URL, DB_USER
 from src.utils.logger.logger import logger
 import psycopg2
@@ -14,7 +13,7 @@ def creating_guest_table():
         cur.execute("select * from information_schema.tables where table_name=%s", ('guest',))
         if bool(cur.rowcount):
             logger.info("====== TABLE ALREADY EXIST IN THE DATABASE PASSING IT ======")
-            # conn.close()
+            conn.close()
             return True
         else:
             logger.warning("======= ADMIN TABLE DOESN'T EXIST, CREATING IT ========")
@@ -37,7 +36,7 @@ def creating_guest_table():
             engine = sqlalchemy.create_engine(
                 DB_URL)
             metadata.create_all(engine)
-            # conn.close()
+            conn.close()
             return guest
     except Exception as e:
         logger.error("######## WENT WRONG IN CREATING GUEST TABLE {} ########".format(e))
@@ -52,7 +51,7 @@ def creating_codes_table():
         cur.execute("select * from information_schema.tables where table_name=%s", ('guest_code',))
         if bool(cur.rowcount):
             logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
-            # conn.close()
+            conn.close()
             return True
         else:
             logger.info("#### CODES TABLE DOESN'T EXIST #### ")
@@ -69,7 +68,7 @@ def creating_codes_table():
             engine = sqlalchemy.create_engine(
                 DB_URL)
             metadata.create_all(engine)
-            # conn.close()
+            conn.close()
             return code
     except Exception as e:
         logger.error("{}".format(e))
@@ -83,7 +82,7 @@ def creating_blacklist_table():
         cur.execute("select * from information_schema.tables where table_name=%s", ('guest_blacklists',))
         if bool(cur.rowcount):
             logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
-            # conn.close()
+            conn.close()
             return True
         else:
             metadata = sqlalchemy.MetaData()
@@ -95,7 +94,7 @@ def creating_blacklist_table():
             engine = sqlalchemy.create_engine(
                 DB_URL)
             metadata.create_all(engine)
-            # conn.close()
+            conn.close()
             return blacklists
     except Exception as e:
         logger.error("{}".format(e))
@@ -109,7 +108,7 @@ def guest_fav_property():
         cur.execute("select * from information_schema.tables where table_name=%s", ('guest_property_fav',))
         if bool(cur.rowcount):
             logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
-            # conn.close()
+            conn.close()
             return True
         else:
             metadata = sqlalchemy.MetaData()
@@ -125,7 +124,7 @@ def guest_fav_property():
             engine = sqlalchemy.create_engine(
                 DB_URL)
             metadata.create_all(engine)
-            # conn.close()
+            conn.close()
             return guest_fav
     except Exception as e:
         logger.error("{}".format(e))
@@ -139,7 +138,7 @@ def booking():
         cur.execute("select * from information_schema.tables where table_name=%s", ('booking',))
         if bool(cur.rowcount):
             logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
-            # conn.close()
+            conn.close()
             return True
         else:
             metadata = sqlalchemy.MetaData()
@@ -177,7 +176,7 @@ def booking():
             engine = sqlalchemy.create_engine(
                 DB_URL)
             metadata.create_all(engine)
-            # conn.close()
+            conn.close()
             return booking
     except Exception as e:
         logger.error("{}".format(e))
