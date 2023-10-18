@@ -35,7 +35,7 @@ def creating_guest_table():
                 sqlalchemy.Column("profile_url", sqlalchemy.String())
             )
             engine = sqlalchemy.create_engine(
-                DB_URL, pool_size=3)
+                DB_URL, pool_size=3,max_overflow=0)
             metadata.create_all(engine)
             conn.close()
             return guest
