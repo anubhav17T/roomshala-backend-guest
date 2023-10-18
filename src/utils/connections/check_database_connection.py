@@ -8,8 +8,6 @@ class DatabaseConfiguration:
 
     def checking_connection(self):
         try:
-            # self.connection = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD,
-            #                                    port=DB_PORT)
             self.connection = psycopg2.connect(user=DB_USER, host=DB_HOST, password=DB_PASSWORD,database=DB_NAME,
                                                port=DB_PORT)
             logger.info("######### DATABASE CONNECTED, PROCEEDING FURTHER  ###########")
@@ -33,8 +31,9 @@ class DatabaseConfiguration:
                 logger.info("####### DATABASE ALREADY EXIST WITH NAME {} ##########".format(database_name))
             else:
                 logger.error("{} DATABASE NOT EXIST".format(database_name))
-                sql = '''CREATE database roomshala_admin'''
+                sql = '''CREATE database roomshaladatabase'''
                 cur.execute(sql)
                 logger.info("### DATABASE CREATED SUCCESSFULLY ###")
             connect.close()
             logger.info("####### DONE ###########")
+

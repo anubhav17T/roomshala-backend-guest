@@ -7,7 +7,7 @@ DB_PORT = 5432
 #ADD DB PASSWORD ON PRODUCTION
 # DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 # DB_URL = f"postgresql://{DB_USER}@{DB_HOST}/{DB_NAME}"
-DB_HOST ="dpg-ckkhvlglk5ic73b8h82g-a.oregon-postgres.render.com"
+DB_HOST ="dpg-ckkhvlglk5ic73b8h82g-a"
 DB_USER = "postgresql"
 DB_PASSWORD = "7l5UozFVRi8EQeEvGXnjF4tmQz3t0kQJ"
 DB_NAME = "roomshaladatabase"

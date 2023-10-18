@@ -6,7 +6,7 @@ from starlette import status
 from src.constants.fields import V1_PREFIX, GUEST_TAGS, HEALTH_TAGS
 from src.controller.v1.booking import booking_engine
 from src.controller.v1.guest import guest
-# from src.utils.connections.db_object import db
+from src.utils.connections.db_object import db
 from src.utils.connections.check_database_connection import DatabaseConfiguration
 from src.utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from src.utils.tables.guest_db_tables import creating_guest_table, creating_codes_table, creating_blacklist_table, \
@@ -48,15 +48,15 @@ app.include_router(booking_engine, prefix=V1_PREFIX,tags=[GUEST_TAGS])
 async def check():
     return {"status": "Ok"}
 
-#
-# @app.on_event("startup")
-# async def startup():
-#     await db.connect()
-#
-#
-# @app.on_event("shutdown")
-# async def shutdown():
-#     await db.disconnect()
+
+@app.on_event("startup")
+async def startup():
+    await db.connect()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await db.disconnect()
 
 
 @app.exception_handler(CustomExceptionHandler)
