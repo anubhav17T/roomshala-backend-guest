@@ -14,7 +14,7 @@ def creating_guest_table():
         cur.execute("select * from information_schema.tables where table_name=%s", ('guest',))
         if bool(cur.rowcount):
             logger.info("====== TABLE ALREADY EXIST IN THE DATABASE PASSING IT ======")
-            conn.close()
+            # conn.close()
             return True
         else:
             logger.warning("======= ADMIN TABLE DOESN'T EXIST, CREATING IT ========")
@@ -35,9 +35,9 @@ def creating_guest_table():
                 sqlalchemy.Column("profile_url", sqlalchemy.String())
             )
             engine = sqlalchemy.create_engine(
-                DB_URL, pool_size=3,max_overflow=0)
+                DB_URL)
             metadata.create_all(engine)
-            conn.close()
+            # conn.close()
             return guest
     except Exception as e:
         logger.error("######## WENT WRONG IN CREATING GUEST TABLE {} ########".format(e))
@@ -52,7 +52,7 @@ def creating_codes_table():
         cur.execute("select * from information_schema.tables where table_name=%s", ('guest_code',))
         if bool(cur.rowcount):
             logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
-            conn.close()
+            # conn.close()
             return True
         else:
             logger.info("#### CODES TABLE DOESN'T EXIST #### ")
@@ -67,9 +67,9 @@ def creating_codes_table():
                 sqlalchemy.Column("status", sqlalchemy.String(1))
             )
             engine = sqlalchemy.create_engine(
-                DB_URL, pool_size=3, max_overflow=0)
+                DB_URL)
             metadata.create_all(engine)
-            conn.close()
+            # conn.close()
             return code
     except Exception as e:
         logger.error("{}".format(e))
@@ -83,7 +83,7 @@ def creating_blacklist_table():
         cur.execute("select * from information_schema.tables where table_name=%s", ('guest_blacklists',))
         if bool(cur.rowcount):
             logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
-            conn.close()
+            # conn.close()
             return True
         else:
             metadata = sqlalchemy.MetaData()
@@ -93,9 +93,9 @@ def creating_blacklist_table():
                 sqlalchemy.Column("email", sqlalchemy.String(100))
             )
             engine = sqlalchemy.create_engine(
-                DB_URL, pool_size=3, max_overflow=0)
+                DB_URL)
             metadata.create_all(engine)
-            conn.close()
+            # conn.close()
             return blacklists
     except Exception as e:
         logger.error("{}".format(e))
@@ -109,7 +109,7 @@ def guest_fav_property():
         cur.execute("select * from information_schema.tables where table_name=%s", ('guest_property_fav',))
         if bool(cur.rowcount):
             logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
-            conn.close()
+            # conn.close()
             return True
         else:
             metadata = sqlalchemy.MetaData()
@@ -123,9 +123,9 @@ def guest_fav_property():
                 sqlalchemy.Column("updated_on", DateTime),
             )
             engine = sqlalchemy.create_engine(
-                DB_URL, pool_size=3, max_overflow=0)
+                DB_URL)
             metadata.create_all(engine)
-            conn.close()
+            # conn.close()
             return guest_fav
     except Exception as e:
         logger.error("{}".format(e))
@@ -139,7 +139,7 @@ def booking():
         cur.execute("select * from information_schema.tables where table_name=%s", ('booking',))
         if bool(cur.rowcount):
             logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
-            conn.close()
+            # conn.close()
             return True
         else:
             metadata = sqlalchemy.MetaData()
@@ -175,9 +175,9 @@ def booking():
                 sqlalchemy.Column("updated_by", sqlalchemy.String()),
             )
             engine = sqlalchemy.create_engine(
-                DB_URL, pool_size=3, max_overflow=0)
+                DB_URL)
             metadata.create_all(engine)
-            conn.close()
+            # conn.close()
             return booking
     except Exception as e:
         logger.error("{}".format(e))
