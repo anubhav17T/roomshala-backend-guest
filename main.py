@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from fastapi import FastAPI, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,6 +7,7 @@ from starlette import status
 from src.constants.fields import V1_PREFIX, GUEST_TAGS, HEALTH_TAGS
 from src.controller.v1.booking import booking_engine
 from src.controller.v1.guest import guest
+from src.utils.connections.consul.connection import connection_service
 from src.utils.connections.db_object import db
 from src.utils.connections.check_database_connection import DatabaseConfiguration
 from src.utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
@@ -27,7 +29,12 @@ def connection():
     booking()
 
 
-connection()
+def service_handler():
+    consul_host = os.environ.get("CONSUL_HOST")
+    consul_port = os.environ.get("CONSUL_PORT")
+    connection_service(host=consul_host,port=consul_port)
+
+
 
 app = FastAPI(title="Roomshala Guest Backend API'S",
               version="1.0.0"
@@ -95,6 +102,8 @@ async def middleware(request: Request, call_next):
     return response
 
 
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, port=8001)
+if __name__ == "__main__":
+    connection()
+    service_handler()
+    import uvicorn
+    uvicorn.run(app, port=8002)
