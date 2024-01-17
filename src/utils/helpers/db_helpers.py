@@ -64,7 +64,7 @@ def get_protected_password(email: str):
 
 
 def guest_change_password(change_password_object: ChangePassword, email: str):
-    query = "UPDATE admin SET password=:password,updated_on=:updated_on WHERE email=:email"
+    query = "UPDATE guest SET password=:password,updated_on=:updated_on WHERE email=:email"
     logger.info("####### CHANGING USER PASSWORD ##########")
     try:
         return db.execute(query, values={"password": change_password_object.new_password, "email": email,
