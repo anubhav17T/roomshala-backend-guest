@@ -30,6 +30,7 @@ def connection():
     property_feedback()
     ticket_management()
 
+connection()
 
 def service_handler():
     consul_host = os.environ.get("CONSUL_HOST")
@@ -106,7 +107,6 @@ async def middleware(request: Request, call_next):
 
 
 if __name__ == "__main__":
-    connection()
     # service_handler()
     import uvicorn
     uvicorn.run(app, port=8002)
