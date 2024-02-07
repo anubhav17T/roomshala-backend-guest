@@ -6,14 +6,14 @@ from starlette.responses import JSONResponse
 from starlette import status
 from src.constants.fields import V1_PREFIX, GUEST_TAGS, HEALTH_TAGS
 from src.controller.v1.booking import booking_engine
+from src.controller.v1.feedback import feedback
 from src.controller.v1.guest import guest
 # from src.utils.connections.consul.connection import connection_service
 from src.utils.connections.db_object import db
 from src.utils.connections.check_database_connection import DatabaseConfiguration
 from src.utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from src.utils.tables.guest_db_tables import creating_guest_table, creating_codes_table, creating_blacklist_table, \
-    guest_fav_property, booking
-
+    guest_fav_property, booking, property_feedback, ticket_management
 
 origins = ["*"]
 
@@ -27,6 +27,8 @@ def connection():
     creating_blacklist_table()
     guest_fav_property()
     booking()
+    property_feedback()
+    ticket_management()
 
 
 def service_handler():
@@ -49,6 +51,7 @@ app.add_middleware(
 )
 app.include_router(guest, prefix=V1_PREFIX,tags=[GUEST_TAGS])
 app.include_router(booking_engine, prefix=V1_PREFIX,tags=[GUEST_TAGS])
+app.include_router(feedback, prefix=V1_PREFIX,tags=[GUEST_TAGS])
 
 
 @app.get("/health",tags=[HEALTH_TAGS])

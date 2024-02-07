@@ -156,7 +156,7 @@ def add_guest_fav_property(fav):
     try:
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
         return db.execute(query,
-                          values={"property_id": fav["property_id"], "user_id": fav["user_id"],
+                          values=   {"property_id": fav["property_id"], "user_id": fav["user_id"],
                                   "is_active": fav["is_active"]})
     except Exception as e:
         logger.error("##### EXCEPTION IN ADD_GUEST_FAV FUNCTION IS {}".format(e))

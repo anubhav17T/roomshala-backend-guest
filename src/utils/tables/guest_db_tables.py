@@ -1,5 +1,5 @@
 import sqlalchemy
-from sqlalchemy import DateTime, Integer, Sequence, ARRAY, FLOAT,DATE
+from sqlalchemy import DateTime, Integer, Sequence, ARRAY, FLOAT, DATE
 from src.constants.utilities import DB_NAME, DB_HOST, DB_PASSWORD, DB_PORT, DB_URL, DB_USER
 from src.utils.logger.logger import logger
 import psycopg2
@@ -130,6 +130,77 @@ def guest_fav_property():
         logger.error("{}".format(e))
 
 
+
+def ticket_management():
+    try:
+        logger.info(" ########## GOING FOR TICKET MANAGEMENT TABLES ##############")
+        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
+        cur = conn.cursor()
+        cur.execute("select * from information_schema.tables where table_name=%s", ('guest_ticket_management',))
+        if bool(cur.rowcount):
+            logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
+            conn.close()
+            return True
+        else:
+            metadata = sqlalchemy.MetaData()
+            guest_ticket_management = sqlalchemy.Table(
+                "guest_ticket_management", metadata,
+                sqlalchemy.Column("id", Integer, Sequence("guest_ticket_management_id_seq"), primary_key=True),
+                sqlalchemy.Column("user_id", sqlalchemy.Integer),
+                sqlalchemy.Column("issue", sqlalchemy.String),
+                sqlalchemy.Column("status", sqlalchemy.String),
+                sqlalchemy.Column("comments", sqlalchemy.String),
+                sqlalchemy.Column("addresser", sqlalchemy.String),
+                sqlalchemy.Column("comment_by_addresser", sqlalchemy.String),
+                sqlalchemy.Column("created_on", DateTime),
+                sqlalchemy.Column("updated_on", DateTime),
+                sqlalchemy.Column("created_by", sqlalchemy.String),
+                sqlalchemy.Column("updated_by", sqlalchemy.String),
+            )
+            engine = sqlalchemy.create_engine(
+                DB_URL)
+            metadata.create_all(engine)
+            conn.close()
+            return guest_ticket_management
+    except Exception as e:
+        logger.error("{}".format(e))
+
+
+def property_feedback():
+    try:
+        logger.info("===== RATING AND REVIEWS =============")
+        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
+        cur = conn.cursor()
+        cur.execute("select * from information_schema.tables where table_name=%s", ('rating_review',))
+        if bool(cur.rowcount):
+            logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
+            conn.close()
+            return True
+        else:
+            metadata = sqlalchemy.MetaData()
+            rating_review = sqlalchemy.Table(
+                "rating_review", metadata,
+                sqlalchemy.Column("id", Integer, Sequence("rating_review_id_seq"), primary_key=True),
+                sqlalchemy.Column("property_id", sqlalchemy.Integer),
+                sqlalchemy.Column("booking_id", sqlalchemy.Integer),
+                sqlalchemy.Column("user_id", sqlalchemy.Integer),
+                sqlalchemy.Column("rating", sqlalchemy.Integer),
+                sqlalchemy.Column("comment", sqlalchemy.String()),
+                sqlalchemy.Column("management_response", sqlalchemy.String()),
+                sqlalchemy.Column("helpful_votes", sqlalchemy.Integer),
+                sqlalchemy.Column("unhelpful_votes", sqlalchemy.Integer),
+                sqlalchemy.Column("date_posted", DateTime),
+                sqlalchemy.Column("updated_at", DateTime),
+            )
+            engine = sqlalchemy.create_engine(
+                DB_URL)
+            metadata.create_all(engine)
+            conn.close()
+            return rating_review
+    except Exception as e:
+        logger.error("{}".format(e))
+
+
 def booking():
     try:
         logger.info(" ########## GOING FOR GUEST BOOKING TABLE ##############")
@@ -145,7 +216,7 @@ def booking():
             booking = sqlalchemy.Table(
                 "booking", metadata,
                 sqlalchemy.Column("id", Integer, Sequence("booking_id_seq"), primary_key=True),
-                sqlalchemy.Column("booking_parent_id",sqlalchemy.String),
+                sqlalchemy.Column("booking_parent_id", sqlalchemy.String),
                 sqlalchemy.Column("property_id", sqlalchemy.Integer),
                 sqlalchemy.Column("room_id", sqlalchemy.Integer),
                 sqlalchemy.Column("user_id", sqlalchemy.Integer),
