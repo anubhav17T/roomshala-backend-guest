@@ -31,3 +31,6 @@ QUERY_FOR_ISSUES = "SELECT * FROM guest_ticket_management WHERE user_id=:user_id
 
 
 QUERY_FOR_PROPERTY_FEEDBACK = "SELECT "
+
+
+QUERY_FOR_IS_PROPERTY_FAV = "SELECT id FROM guest_property_fav WHERE user_id=:user_id AND property_id=:property_id"

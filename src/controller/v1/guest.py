@@ -15,7 +15,7 @@ from src.utils.helpers.db_helpers import add_guest, create_reset_code, check_res
     guest_change_password, add_guest_fav_property, update_guest_fav_property, check_fav_property_existence, \
     find_user_fav_properties, find_base_room_price
 from src.utils.helpers.db_helpers_property import find_particular_property_information, find_rooms_wise_price, \
-    get_facility_of_property, find_rooms, get_amenity_of_property, particular_room_info
+    get_facility_of_property, find_rooms, get_amenity_of_property, particular_room_info, check_if_property_marked_fav
 from src.utils.helpers.guest_check import CheckGuest
 from src.utils.helpers.misc import check_password_strength, hash_password, verify_password, user_price_distribution
 from src.utils.logger.logger import logger
@@ -428,7 +428,9 @@ async def fetch_room_information(id:int):
 
 
 @guest.get("/guest/property/{id}")
-async def property_by_id(id: int):
+async def property_by_id(id: int,
+                         guest_id:int = Query(default=None,description="Check for is fav")):
+
     property_information = await find_particular_property_information(id)
     if property_information is None:
         raise CustomExceptionHandler(message="No Property Found",
@@ -436,7 +438,14 @@ async def property_by_id(id: int):
                                      target="",
                                      code=status.HTTP_400_BAD_REQUEST
                                      )
+    #check if user has marked this property favourite or not
     property_information = dict(property_information)
+    if guest_id is not None:
+        check = await check_if_property_marked_fav(property_id=id,user_id=guest_id)
+        if check is None:
+            property_information["is_favourite"] = False
+        else:
+            property_information["is_favourite"] = True
     property_information["property_docs"] = json.loads(property_information["property_docs"])
     property_information["property_docs"] = property_information["property_docs"]["property_images"]
     room_wise_price = await find_rooms_wise_price(property_id=id)

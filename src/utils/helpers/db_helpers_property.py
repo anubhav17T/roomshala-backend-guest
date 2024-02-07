@@ -1,7 +1,7 @@
 from src.utils.connections.db_object import db
 from src.utils.helpers.db_queries import QUERY_FOR_FINDING_FEEDBACK, QUERY_FOR_FINDING_BOOKING, \
     QUERY_FOR_FINDING_PROPERTY_AMENITY, QUERY_FOR_FINDING_PROPERTY_FACILITY, QUERY_FOR_ADDING_REVIEW, \
-    QUERY_FOR_CREATING_TICKET, QUERY_FOR_OPEN_TICKET, QUERY_FOR_ISSUES
+    QUERY_FOR_CREATING_TICKET, QUERY_FOR_OPEN_TICKET, QUERY_FOR_ISSUES, QUERY_FOR_IS_PROPERTY_FAV
 
 
 def find_particular_property_information(id: int):
@@ -121,6 +121,10 @@ def create_ticket(details):
 
 def fetch_my_issues(user_id):
     return db.fetch_all(query=QUERY_FOR_ISSUES,values={"user_id":user_id})
+
+
+def check_if_property_marked_fav(user_id,property_id):
+    return db.fetch_one(query=QUERY_FOR_IS_PROPERTY_FAV,values={"user_id":user_id,"property_id":property_id})
 
 
 def find_property_reviews(property_id,rating,sorted_by):

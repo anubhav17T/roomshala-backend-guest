@@ -1,7 +1,6 @@
 import json
 from datetime import timedelta, datetime
 from starlette.background import BackgroundTasks
-
 from fastapi import APIRouter, Query, Path, Depends
 from starlette import status
 from src.models.booking import Booking, UpdateBooking, BookingType
