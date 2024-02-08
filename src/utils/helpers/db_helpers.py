@@ -165,9 +165,10 @@ def add_guest_fav_property(fav):
 
 
 def update_guest_fav_property(is_active, property_id, user_id):
-    query = "UPDATE guest_property_fav SET is_active=:is_active Where property_id=:property_id AND user_id=:user_id RETURNING id;"
+    query = "DELETE FROM guest_property_fav WHERE property_id=:property_id AND user_id=:user_id RETURNING id;"
+    # query = "UPDATE guest_property_fav SET is_active=:is_active Where property_id=:property_id AND user_id=:user_id RETURNING id;"
     try:
-        return db.execute(query, values={"property_id": property_id, "is_active": is_active, "user_id": user_id})
+        return db.execute(query, values={"property_id": property_id,"user_id": user_id})
     except Exception as e:
         logger.error("#### EXCEPTION IN MARKING GUEST PROPERTY FAV IS {}".format(e))
     finally:

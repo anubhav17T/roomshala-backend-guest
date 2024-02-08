@@ -61,9 +61,7 @@ async def booking(book: Booking, background_tasks: BackgroundTasks, current_user
             success=False,
             code=status.HTTP_409_CONFLICT,
             target="CREATE_BOOKING")
-
     property_id = None
-
     for room_id in book.room_id:
         asset = AssetValidation(room_id=room_id)
         check = await asset.validate_property_info()
