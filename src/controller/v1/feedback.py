@@ -24,7 +24,7 @@ async def property_reviews_ratings(feed: Feedback, current_user=Depends(get_curr
                                      target="CHECK_BOOKING_ID",
                                      success=False
                                      )
-    if booking_details["status"] != "COMPLETED":
+    if booking_details["status"] != "CONFIRMED":
         return ResponseModel(message="Your booking is not Completed yet",
                              code=status.HTTP_200_OK,
                              success=True,

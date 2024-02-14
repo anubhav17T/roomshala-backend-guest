@@ -215,7 +215,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         expire_delta=access_token_expires
     )
     return {"message": "Successfully Login",
-            "code": status.HTTP_201_CREATED,
+            "code": status.HTTP_200_OK,
             "success": True,
             "access_token": access_token,
             "token_type": "bearer",

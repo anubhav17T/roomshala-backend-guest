@@ -3,7 +3,7 @@ from datetime import timedelta, datetime
 from starlette.background import BackgroundTasks
 from fastapi import APIRouter, Query, Path, Depends
 from starlette import status
-from src.models.booking import Booking, UpdateBooking, BookingType
+from src.models.booking import Booking, UpdateBooking, BookingType, BookingGuest
 from src.utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from src.utils.helpers.asset_check import AssetValidation, TimeslotConfiguration
 from src.utils.helpers.db_helpers import create_booking, find_booking, find_booking_for_guest, update_booking, \
@@ -20,6 +20,11 @@ from pytz import timezone
 booking_engine = APIRouter()
 
 DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+
+
+@booking_engine.post("/property/continue-guest/booking")
+async def booking_for_guest(booking: BookingGuest, background_tasks: BackgroundTasks):
+    logger.info("======== CREATING BOOKING For {} =========".format(booking.guest_details.first_name))
 
 
 @booking_engine.post("/property/booking")
@@ -160,7 +165,7 @@ async def booking(book: Booking, background_tasks: BackgroundTasks, current_user
         guest_details_map = json.loads(book.guest_details)
 
         details = {"hotel_name": property_details["property_name"],
-                   "booking_id":book.booking_parent_id,
+                   "booking_id": book.booking_parent_id,
                    "checkin_date": book.booking_date,
                    "checkout_date": book.departure_date,
                    "num_rooms": book.rooms,
