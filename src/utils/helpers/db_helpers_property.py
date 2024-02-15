@@ -127,6 +127,11 @@ def check_if_property_marked_fav(user_id,property_id):
     return db.fetch_one(query=QUERY_FOR_IS_PROPERTY_FAV,values={"user_id":user_id,"property_id":property_id})
 
 
+def find_property_rating(property_id):
+    query = "SELECT ROUND(AVG(rating), 1) AS average_rating FROM rating_review WHERE property_id=:property_id"
+    return db.fetch_one(query=query,values={"property_id":property_id})
+
+
 def find_property_reviews(property_id,rating,sorted_by):
     if rating is not None and sorted_by is not None:
         if sorted_by == "RECENT":
